@@ -1,53 +1,53 @@
 // TODO: remove this when you're done with your implementation.
 // #![allow(unused_variables, dead_code)]
 
+// Overall I'm happy with this.
+// There's quite a bit of boilerplate but that's from munging strings and integers
+// There may be a more elegant solution using arrays or vectors directly
+
+fn double_or_nothing(index_in: usize, digit_in: u32) -> Option<char> {
+    if index_in % 2 == 0 {
+        return char::from_digit(digit_in, 10);
+    };
+    let doubled_number = digit_in * 2;
+    // These couple of unwraps _should_ be safe, as we've already constrained the input
+    let sum_of_digits: u32 = doubled_number
+        .to_string()
+        .chars()
+        .map(|c| c.to_digit(10).unwrap())
+        .sum();
+    char::from_digit(sum_of_digits, 10)
+}
+
 pub fn luhn(cc_number: &str) -> bool {
+    // Strip spaces
     let cc_number = cc_number.replace(" ", "");
-    println!("Trimmed input {cc_number}");
-    // I wanted to do this without the else to bail out early...
-    // Not indent the rest of this function...
-    // I hear side effects in pattern matching are bad anyways...
-    // match cc_number.len() {
-    //     ..=3 => return false,
-    //     _ => (),
-    // };
+    // Check all valid numbers
+    if !cc_number.chars().map(|c| c.is_digit(10)).all(|c| c) {
+        return false;
+    };
+    // Check minimum length
     if cc_number.len() < 2 {
-        false
-    } else {
-        let mut accumulator = String::new();
-        let cc_number: String = cc_number.chars().rev().collect();
-        for (index, character) in cc_number.char_indices() {
-            println!("Processing {index}, {character}");
-            println!("Whole accumulator: {accumulator}");
-            if index % 2 == 0 {
-                println!("Pushing {character}");
-                accumulator.push(character);
-                continue;
-            };
-            let digit = match character.to_digit(10) {
-                Some(int) => int,
-                None => return false,
-            };
-            let digit = digit * 2;
-            println!("Doubled to {digit}");
-            // These couple of unwraps _should_ be safe, as we've already checked the input?
-            let sum_of_digits: u32 = digit
-                .to_string()
-                .chars()
-                .map(|c| c.to_digit(10).unwrap())
-                .sum();
-            let result_character = char::from_digit(sum_of_digits, 10).unwrap();
-            println!("Pushing {result_character}");
-            accumulator.push(result_character);
-        }
-        println!("Final accumulator: {accumulator:?}");
-        accumulator
-            .chars()
-            .map(|c| c.to_digit(10).unwrap())
-            .sum::<u32>()
-            % 10
-            == 0
+        return false;
     }
+    // We must flip the string first to make sure the indexes are right-to-left
+    let reversed_string = cc_number.chars().rev().collect::<String>();
+    // Iterate over tuples enumerating the string characters
+    //  processing each character and collecting them cumulatively into a final String
+    let processed_string = reversed_string
+        .char_indices()
+        .fold(String::new(), |a, (i, c)| {
+            format!(
+                "{a}{}",
+                double_or_nothing(i, c.to_digit(10).unwrap()).unwrap()
+            )
+        });
+    processed_string
+        .chars()
+        .map(|c| c.to_digit(10).unwrap())
+        .sum::<u32>()
+        % 10
+        == 0
 }
 
 #[test]
