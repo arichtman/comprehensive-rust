@@ -1,29 +1,52 @@
 // TODO: remove this when you're done with your implementation.
 // #![allow(unused_variables, dead_code)]
 
-//This while implementation is so nasty it's not even funny...
-fn jank(input: char) -> Option<char> {
-    let double = input.to_digit(10).unwrap() * 2;
-    let double = double.to_string();
-    let output = double.chars().fold(0, |a, c| c.to_digit(10).unwrap() + a);
-    char::from_u32(output)
-}
 pub fn luhn(cc_number: &str) -> bool {
     let cc_number = cc_number.replace(" ", "");
+    println!("Trimmed input {cc_number}");
     // I wanted to do this without the else to bail out early...
     // Not indent the rest of this function...
-    if cc_number.len() <= 2 {
+    // I hear side effects in pattern matching are bad anyways...
+    // match cc_number.len() {
+    //     ..=3 => return false,
+    //     _ => (),
+    // };
+    if cc_number.len() < 2 {
         false
     } else {
-        let cc_number = cc_number
-            .char_indices()
-            .fold(String::new(), |a, (i, c)| {
-                format!("{a}{}", if i % 2 == 0 { jank(c).unwrap() } else { c })
-            })
+        let mut accumulator = String::new();
+        let cc_number: String = cc_number.chars().rev().collect();
+        for (index, character) in cc_number.char_indices() {
+            println!("Processing {index}, {character}");
+            println!("Whole accumulator: {accumulator}");
+            if index % 2 == 0 {
+                println!("Pushing {character}");
+                accumulator.push(character);
+                continue;
+            };
+            let digit = match character.to_digit(10) {
+                Some(int) => int,
+                None => return false,
+            };
+            let digit = digit * 2;
+            println!("Doubled to {digit}");
+            // These couple of unwraps _should_ be safe, as we've already checked the input?
+            let sum_of_digits: u32 = digit
+                .to_string()
+                .chars()
+                .map(|c| c.to_digit(10).unwrap())
+                .sum();
+            let result_character = char::from_digit(sum_of_digits, 10).unwrap();
+            println!("Pushing {result_character}");
+            accumulator.push(result_character);
+        }
+        println!("Final accumulator: {accumulator:?}");
+        accumulator
             .chars()
-            .fold(0, |a, c| a + c.to_digit(10).unwrap());
-        let final_char = cc_number.to_string().chars().last().unwrap();
-        final_char == '0'
+            .map(|c| c.to_digit(10).unwrap())
+            .sum::<u32>()
+            % 10
+            == 0
     }
 }
 
